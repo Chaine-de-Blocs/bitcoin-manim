@@ -29,6 +29,7 @@ class OPCODE(Enum):
     OP_14 = 94
     OP_15 = 95
     OP_16 = 96
+    OP_IF = 99
     OP_VERIFY = 105
     OP_DUP = 118
     OP_EQUAL = 135
@@ -43,32 +44,59 @@ class OPCODE(Enum):
     OP_CHECKSIG = 172
 
 class AnimOPCODESeq(Scene):
+    # Must do something recursive
     def construct(self):
         # TODO check if stack valid
-        self.in_stack = ["304502201fd8abb11443f8b1b9a04e0495e0543d05611473a790c8939f089d073f90509a022100f4677825136605d732e2126d09a2d38c20c75946cd9fc239c0497e84c634e3dd", "03301a8259a12e35694cc22ebc45fee635f4993064190f6ce96e7fb19a03bb6be2", OPCODE.OP_CHECKSIG]
-        in_stack_mobj = []
-        out_stack_mobj = []
-        output_stack = []
+        self.in_stack = [OPCODE.OP_EQUAL, OPCODE.OP_IF, [OPCODE.OP_1, OPCODE.OP_IF, [OPCODE.OP_2]]]
+        self.output_stack = []
+        self.input_block_level = -1
         
-        # Display the OPCODE input stack
-        for idx, in_stack_value in enumerate(self.in_stack):
+        self.in_stack_mobj = []
+        self.out_stack_mobj = []
+        
+        self.explain_mobj = MarkupText(f"Processing the SCRIPT").scale(0.4).to_corner(DOWN)
+        self.play(FadeIn(self.explain_mobj))
+            
+        self.process_input_block(self.in_stack)
+        
+        return
+        
+        last_output = self.output_stack.pop()
+        if last_output == OPCODE.OP_VERIFY:
+            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">OP_VERIFY</span></b>')
+        elif last_output == OPCODE.OP_EQUALVERIFY:
+            value_1, value_2 = self.read_output_stack_params(self.output_stack, 2)
+            end_text = MarkupText(f'The values {value_1} and {value_2} are different. The transaction fails because it does not pass the {OPCODE.OP_VERIFY.name}')
+        else:
+            end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>')
+            
+        self.play(Transform(self.explain_mobj, end_text))
+        
+    def process_input_block(self, input_block):
+        self.input_block_level += 1
+        
+        for idx, in_stack_value in enumerate(input_block):
+            if type(in_stack_value) == list:
+                self.process_input_block(in_stack_value)
+                break
             name = f"&lt;{in_stack_value}&gt;"
             if type(in_stack_value) is not str:
                 name = f"{in_stack_value.name}"
             opcode_text = MarkupText(name).scale(0.6).to_corner(UL)
-            if len(in_stack_mobj) > 0:
-                opcode_text.next_to(in_stack_mobj[idx - 1], DOWN).align_to(in_stack_mobj[idx - 1], LEFT)
+            if len(self.in_stack_mobj) > 0:
+                opcode_text.next_to(self.in_stack_mobj[len(self.in_stack_mobj) - 1], DOWN / 5).align_to(self.in_stack_mobj[idx - 1], LEFT).shift(RIGHT * self.input_block_level / 4)
             self.play(Write(opcode_text))
-            in_stack_mobj.append(opcode_text)
+            self.in_stack_mobj.append(opcode_text)
             
-        explain_mobj = MarkupText(f"Processing the SCRIPT").scale(0.4).to_corner(DOWN)
-        self.play(FadeIn(explain_mobj))
-        self.wait()
-
+        self.input_block_level -= 1
+            
+        # TODO recursive output with IF/ELSE blocks
+        return
+        
         for idx, in_stack_value in enumerate(self.in_stack):
             new_output_stack, explain, tx_invalid = self.process_opcode_output_stack(
                 p_opcode=in_stack_value,
-                p_output_stack=output_stack.copy(),
+                p_output_stack=self.output_stack.copy(),
                 current_index=idx
             )
             
@@ -79,7 +107,7 @@ class AnimOPCODESeq(Scene):
             )
             
             if tx_invalid:
-                output_stack = new_output_stack
+                self.output_stack = new_output_stack
                 break
 
             output_text = MarkupText(f"{str(new_output_stack[len(new_output_stack) - 1])}").scale(0.6)
@@ -92,8 +120,8 @@ class AnimOPCODESeq(Scene):
             self.play(Write(output_text))
             out_stack_mobj.append(output_text)
             
-            if len(new_output_stack) <= len(output_stack):
-                nb_unstack = len(output_stack) - len(new_output_stack) + 1
+            if len(new_output_stack) <= len(self.output_stack):
+                nb_unstack = len(self.output_stack) - len(new_output_stack) + 1
                 if nb_unstack == 2:
                     self.play(
                         FadeOut(out_stack_mobj[len(out_stack_mobj) - 2], shift=RIGHT),
@@ -101,22 +129,13 @@ class AnimOPCODESeq(Scene):
                         out_stack_mobj[len(out_stack_mobj) - 1].animate.move_to(out_stack_mobj[len(out_stack_mobj) - 3]).align_to(out_stack_mobj[len(out_stack_mobj) - 3], LEFT)
                     )
             
-            output_stack = new_output_stack
+            self.output_stack = new_output_stack
 
             self.remove(explain_mobj)
             explain_mobj = new_explain_mobj
         
-        last_output = output_stack.pop()
-        if last_output == OPCODE.OP_VERIFY:
-            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">OP_VERIFY</span></b>')
-        elif last_output == OPCODE.OP_EQUALVERIFY:
-            value_1, value_2 = self.read_output_stack_params(output_stack, 2)
-            end_text = MarkupText(f'The values {value_1} and {value_2} are different. The transaction fails because it does not pass the {OPCODE.OP_VERIFY.name}')
-        else:
-            end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>')
-            
-        self.play(Transform(explain_mobj, end_text))
-        
+        self.input_block_level -= 1
+
     def process_opcode_output_stack(self, p_opcode, p_output_stack, current_index):
         explain = "Nothing happened"
         output = None
@@ -197,6 +216,9 @@ class AnimOPCODESeq(Scene):
                 verif_key.verify(bytes.fromhex(sig), message, hashlib.sha256, sigdecode=sigdecode_der)
             except ecdsa.BadSignatureError:
                 output = False
+        elif p_opcode == OPCODE.OP_IF:
+            value = self.read_output_stack_params(p_output_stack, 1)
+            # TODO must enter a new block
         else:
             output = self.in_stack[current_index]
             explain = f'Reads the data <b><span fgcolor="{YELLOW}">{output}</span></b> from input stack'
