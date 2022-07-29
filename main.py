@@ -1,9 +1,8 @@
-from cmath import exp
+from ctypes import alignment
 from manim import *
 from enum import Enum
 import hashlib
 import ecdsa
-import random
 from ecdsa.util import sigdecode_der, sigencode_der
 
 class OPCODE(Enum):
@@ -47,6 +46,7 @@ class OPCODE(Enum):
     OP_CHECKSIG = 172
     
 stack_bottom_margin = DOWN / 5
+stack_top_elt = UP * 3
 
 class AnimOPCODESeq(Scene):
     def construct(self):
@@ -54,8 +54,8 @@ class AnimOPCODESeq(Scene):
         # TODO Freezing funds until a time in the future
         # TODO Incentivized finding of hash collisions
         
-        self.in_stack = [OPCODE.OP_1, OPCODE.OP_IF, [OPCODE.OP_10, OPCODE.OP_11, OPCODE.OP_IF, [OPCODE.OP_13], OPCODE.OP_ENDIF], OPCODE.OP_ENDIF]
-        # self.generate_p2pkh_script()
+        # self.in_stack = [OPCODE.OP_1, OPCODE.OP_IF, [OPCODE.OP_10, OPCODE.OP_11, OPCODE.OP_IF, [OPCODE.OP_13], OPCODE.OP_ENDIF], OPCODE.OP_ENDIF]
+        self.generate_p2pkh_script()
         # self.generate_p2pk_script()
         # self.generate_puzzle()
         
@@ -68,25 +68,50 @@ class AnimOPCODESeq(Scene):
         
         self.in_stack_mobj = []
         self.out_stack_mobj = []
+        self.output_stack_mobj_grp = Group()
         
-        self.explain_mobj = MarkupText(f"Processing the SCRIPT").scale(0.4).to_corner(DOWN)
+        self.explain_mobj = MarkupText(f"Processing the SCRIPT", should_center=True).scale(0.4).to_corner(DOWN)
         self.play(FadeIn(self.explain_mobj))
             
         self.render_input_stack(self.in_stack)
+        
+        # decorates the input stack
+        input_mobj_grp = Group()
+        for _, obj in enumerate(self.in_stack_mobj):
+            input_mobj_grp.add(obj)
+        input_stack_framebox = SurroundingRectangle(input_mobj_grp, buff=.5, color=BLUE, corner_radius=.15)
+        self.play(Create(input_stack_framebox))
+        
+        input_stack_title = Text("Input Stack (SCRIPT)", color=BLUE).scale(.6).next_to(input_stack_framebox, UP).align_to(input_stack_framebox, LEFT)
+        self.play(Write(input_stack_title))
+        
         self.render_output_stack(self.in_stack)
+        
+        output_stack_framebox = SurroundingRectangle(self.output_stack_mobj_grp, buff=.5, corner_radius=.15)
+        self.play(Create(output_stack_framebox))
+
+        output_stack_title = Text("Output Stack (RESULT)", color=YELLOW).scale(.6).next_to(output_stack_framebox, UP).align_to(output_stack_framebox, LEFT)
+        self.play(Write(output_stack_title))        
         
         last_output = None if len(self.output_stack) == 0 else self.output_stack[-1]
         
         if self.tx_invalid:
             print(f"This tx in invalid, failed at {last_output.name}")
-            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b>')
+            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b>', fill_opacity=1)
         else:
             print(f"This tx ended with {last_output}")
-            end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>')
+            if last_output == True:
+                end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction is valid!')
+            else:
+                end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction fails!')
             
         print("Final output stack : ", self.output_stack)
-            
-        self.play(Transform(self.explain_mobj, end_text))
+        
+        end_text.add_background_rectangle(color=BLACK, opacity=.9)
+
+        self.play(
+            Transform(self.explain_mobj, end_text)
+        )
         
     def render_input_stack(self, input_block):
         self.input_block_level += 1
@@ -98,14 +123,17 @@ class AnimOPCODESeq(Scene):
             name = f"&lt;{self.format_value_for_render(in_stack_value)}&gt;"
             if type(in_stack_value) is not str:
                 name = f"{in_stack_value.name}"
-            opcode_text = MarkupText(name).scale(0.6).to_corner(UL)
-            if len(self.in_stack_mobj) > 0:
-                opcode_text.next_to(self.in_stack_mobj[-1], stack_bottom_margin).align_to(self.in_stack_mobj[-1], LEFT)
                 
+            opcode_text = MarkupText(name).scale(0.6)
+            if len(self.in_stack_mobj) == 0:
+                opcode_text.to_corner(stack_top_elt).shift(LEFT * 3)
+            else:
+                opcode_text.next_to(self.in_stack_mobj[-1], stack_bottom_margin).align_to(self.in_stack_mobj[-1], LEFT)
                 if in_stack_value == OPCODE.OP_ENDIF:
                     opcode_text.shift(LEFT / 3)
                 if idx == 0 and self.input_block_level > 0:
                     opcode_text.shift(RIGHT / 3)
+                    
             self.play(Write(opcode_text))
             self.in_stack_mobj.append(opcode_text)
             
@@ -129,13 +157,13 @@ class AnimOPCODESeq(Scene):
                 current_in_idx=idx
             )
             
-            new_explain_mobj = MarkupText(explain).scale(0.4).to_corner(DOWN)
+            new_explain_mobj = MarkupText(explain, should_center=True).scale(0.4).to_corner(DOWN)
             self.play(
                 Indicate(self.in_stack_mobj[self.current_in_stack_mobj_idx]),
                 Transform(self.explain_mobj, new_explain_mobj)
             )
             
-            self.update_output_mobj(read_output_values, write_output_values)
+            self.update_output_mobj(read_output_values, write_output_values, in_stack_value)
         
             if enter_next_input_block:
                 self.render_output_stack(input_block[idx + 1])
@@ -146,7 +174,7 @@ class AnimOPCODESeq(Scene):
             
         return read_output_values
     
-    def update_output_mobj(self, read_values, write_values):            
+    def update_output_mobj(self, read_values, write_values, opcode):            
         if self.tx_invalid:
             return
 
@@ -156,37 +184,52 @@ class AnimOPCODESeq(Scene):
         
         if output_text is not None:
             if len(self.out_stack_mobj) == 0:
-                output_text.to_corner(UP)
+                output_text.to_corner(stack_top_elt).shift(RIGHT * 3)
             else:
                 output_text.next_to(self.out_stack_mobj[-1], stack_bottom_margin).align_to(self.out_stack_mobj[-1], LEFT)
 
+            self.output_stack_mobj_grp.add(output_text)
             self.play(Write(output_text))
             self.out_stack_mobj.append(output_text)
-            
-        stack_grp = Group()
-        last_mobj = None
-        remove_mobj_idx = []
-        for i in range(len(read_values)):
-            mobj_idx = len(self.out_stack_mobj) - (1 + i + len(write_values))
-            remove_mobj_idx.append(mobj_idx)
-            last_mobj = self.out_stack_mobj[mobj_idx]
-            stack_grp.add(last_mobj)
-            
-        # updates the mobj list to be coherent with the output stack
-        for _, mobj_idx in enumerate(remove_mobj_idx):
-            print(mobj_idx)
-            self.out_stack_mobj.pop(mobj_idx)
 
         if len(read_values) > 0:
+            stack_grp = Group()
+            remove_mobj_idx = []
+            last_mobj = None
+            for i in range(len(read_values)):
+                mobj_idx = len(self.out_stack_mobj) - (1 + i + len(write_values))
+                remove_mobj_idx.append(mobj_idx)
+                last_mobj = self.out_stack_mobj[mobj_idx]
+                stack_grp.add(last_mobj)
+                
+            read_values_grp = VGroup()
+            # updates the mobj list to be coherent with the output stack
+            for _, mobj_idx in enumerate(remove_mobj_idx):
+                read_values_grp.add(self.out_stack_mobj.pop(mobj_idx))
+
+            # line to give rotate direction
+            dir_line = Line()                
+            read_values_brace = Brace(read_values_grp, sharpness=.1, direction=dir_line.rotate(PI * 2).get_unit_vector())
+            self.play(FadeIn(read_values_brace, shift=RIGHT / 4))
+            
+            read_values_text = Text(f"{opcode.name} params").scale(0.3).next_to(read_values_brace, RIGHT)
+            self.play(Write(read_values_text))
+            
             # updates the stack it read values and write some
             if len(write_values) > 0:
                 self.play(
-                    FadeOut((stack_grp), shift=RIGHT),
+                    FadeOut(stack_grp, shift=RIGHT),
+                    FadeOut(read_values_brace, shift=RIGHT),
+                    FadeOut(read_values_text, shift=RIGHT),
                     self.out_stack_mobj[-1].animate.move_to(last_mobj).align_to(last_mobj, LEFT)
                 )
             # only removes the read stack
             else:
-                self.play(FadeOut((stack_grp), shift=RIGHT))
+                self.play(
+                    FadeOut((stack_grp), shift=RIGHT),
+                    FadeOut(read_values_brace, shift=RIGHT),
+                    FadeOut(read_values_text, shift=RIGHT)
+                )
 
     def process_opcode_output_stack(self, p_opcode, input_block, current_in_idx):
         explain = None
