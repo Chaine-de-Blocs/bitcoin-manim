@@ -10,6 +10,16 @@ A script that animates the execution of a given Bitcoin OPCODE
 
 `manim -pql main.py AnimOPCODESeq  `
 
+## Note
+
+### About signature key generation
+
+Use ECDSA `Seckp256k1` for key generation
+
+### About signatures and signature verification
+
+Bitcoin rely on `der` encoding so make sure to generate signatures with `der` encoding.
+
 ## Limitations
 
 This script only take in SCRIPT (OPCODE input Stack) and simulate any data that is normally fetched from Bitcoin.

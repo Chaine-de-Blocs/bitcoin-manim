@@ -1,10 +1,10 @@
 from cmath import exp
-import opcode
 from manim import *
 from enum import Enum
 import hashlib
 import ecdsa
-from ecdsa.util import sigdecode_der
+import random
+from ecdsa.util import sigdecode_der, sigencode_der
 
 class OPCODE(Enum):
     OP_0 = 0
@@ -33,6 +33,7 @@ class OPCODE(Enum):
     OP_IF = 99
     OP_ENDIF = 103
     OP_VERIFY = 105
+    OP_RETURN = 106
     OP_DUP = 118
     OP_EQUAL = 135
     OP_EQUALVERIFY = 136
@@ -50,7 +51,16 @@ stack_bottom_margin = DOWN / 5
 class AnimOPCODESeq(Scene):
     def construct(self):
         # TODO check if stack valid
-        self.in_stack = [OPCODE.OP_TRUE, OPCODE.OP_IF, [OPCODE.OP_2], OPCODE.OP_ENDIF, OPCODE.OP_DUP, OPCODE.OP_10, OPCODE.OP_ADD, OPCODE.OP_EQUALVERIFY]
+        # TODO Freezing funds until a time in the future
+        # TODO Incentivized finding of hash collisions
+        
+        self.in_stack = [OPCODE.OP_1, OPCODE.OP_IF, [OPCODE.OP_10, OPCODE.OP_11, OPCODE.OP_IF, [OPCODE.OP_13], OPCODE.OP_ENDIF], OPCODE.OP_ENDIF]
+        # self.generate_p2pkh_script()
+        # self.generate_p2pk_script()
+        # self.generate_puzzle()
+        
+        print("SCRIPT : ", self.in_stack)
+
         self.output_stack = []
         self.input_block_level = -1
         self.current_in_stack_mobj_idx = -1
@@ -65,12 +75,16 @@ class AnimOPCODESeq(Scene):
         self.render_input_stack(self.in_stack)
         self.render_output_stack(self.in_stack)
         
-        last_output = self.output_stack[-1]
+        last_output = None if len(self.output_stack) == 0 else self.output_stack[-1]
         
         if self.tx_invalid:
+            print(f"This tx in invalid, failed at {last_output.name}")
             end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b>')
         else:
+            print(f"This tx ended with {last_output}")
             end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>')
+            
+        print("Final output stack : ", self.output_stack)
             
         self.play(Transform(self.explain_mobj, end_text))
         
@@ -81,13 +95,17 @@ class AnimOPCODESeq(Scene):
             if type(in_stack_value) == list:
                 self.render_input_stack(in_stack_value)
                 continue
-            name = f"&lt;{in_stack_value}&gt;"
+            name = f"&lt;{self.format_value_for_render(in_stack_value)}&gt;"
             if type(in_stack_value) is not str:
                 name = f"{in_stack_value.name}"
             opcode_text = MarkupText(name).scale(0.6).to_corner(UL)
             if len(self.in_stack_mobj) > 0:
-                # TODO fixes end of block indent
-                opcode_text.next_to(self.in_stack_mobj[len(self.in_stack_mobj) - 1], stack_bottom_margin).align_to(self.in_stack_mobj[idx - 1], LEFT).shift(RIGHT * self.input_block_level / 4)
+                opcode_text.next_to(self.in_stack_mobj[-1], stack_bottom_margin).align_to(self.in_stack_mobj[-1], LEFT)
+                
+                if in_stack_value == OPCODE.OP_ENDIF:
+                    opcode_text.shift(LEFT / 3)
+                if idx == 0 and self.input_block_level > 0:
+                    opcode_text.shift(RIGHT / 3)
             self.play(Write(opcode_text))
             self.in_stack_mobj.append(opcode_text)
             
@@ -134,11 +152,11 @@ class AnimOPCODESeq(Scene):
 
         output_text = None
         if len(write_values) > 0:
-            output_text = MarkupText(f"{str(write_values[-1])}").scale(0.6)
+            output_text = MarkupText(f"{self.format_value_for_render(str(write_values[-1]))}").scale(0.6)
         
         if output_text is not None:
-            if self.current_in_stack_mobj_idx == 0:
-                output_text.next_to(self.in_stack_mobj[0], RIGHT)
+            if len(self.out_stack_mobj) == 0:
+                output_text.to_corner(UP)
             else:
                 output_text.next_to(self.out_stack_mobj[-1], stack_bottom_margin).align_to(self.out_stack_mobj[-1], LEFT)
 
@@ -147,18 +165,26 @@ class AnimOPCODESeq(Scene):
             
         stack_grp = Group()
         last_mobj = None
+        remove_mobj_idx = []
         for i in range(len(read_values)):
-            last_mobj = self.out_stack_mobj[len(self.out_stack_mobj) - (i + 2)]
+            mobj_idx = len(self.out_stack_mobj) - (1 + i + len(write_values))
+            remove_mobj_idx.append(mobj_idx)
+            last_mobj = self.out_stack_mobj[mobj_idx]
             stack_grp.add(last_mobj)
+            
+        # updates the mobj list to be coherent with the output stack
+        for _, mobj_idx in enumerate(remove_mobj_idx):
+            print(mobj_idx)
+            self.out_stack_mobj.pop(mobj_idx)
 
         if len(read_values) > 0:
-            # Update the stack it read values and write some
+            # updates the stack it read values and write some
             if len(write_values) > 0:
                 self.play(
                     FadeOut((stack_grp), shift=RIGHT),
                     self.out_stack_mobj[-1].animate.move_to(last_mobj).align_to(last_mobj, LEFT)
                 )
-            # Only removes the read stack
+            # only removes the read stack
             else:
                 self.play(FadeOut((stack_grp), shift=RIGHT))
 
@@ -177,7 +203,7 @@ class AnimOPCODESeq(Scene):
         elif p_opcode == OPCODE.OP_EQUAL:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] == read_output_values[1]
-            explain = f'{p_opcode.name} : Are the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b> equals?'
+            explain = f'{p_opcode.name} : Are the values <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b> and <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b> equals?'
         elif p_opcode == OPCODE.OP_ADD:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] + read_output_values[1]
@@ -207,10 +233,10 @@ class AnimOPCODESeq(Scene):
         elif p_opcode == OPCODE.OP_HASH160:
             read_output_values = self.read_output_stack_params(1)
             output = hashlib.new("ripemd160", str.encode(read_output_values[0])).hexdigest()
-            explain = f'{p_opcode.name} : RIPEMD160 Hashes the value <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>'
+            explain = f'{p_opcode.name} : RIPEMD160 Hashes the value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>'
         elif p_opcode == OPCODE.OP_DUP:
             output = self.output_stack[-1]
-            explain = f'{p_opcode.name} : Duplicates the value <b><span fgcolor="{YELLOW}">{output}</span></b>'
+            explain = f'{p_opcode.name} : Duplicates the value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b>'
         elif p_opcode == OPCODE.OP_VERIFY:
             read_output_values = self.read_output_stack_params(1)
             if read_output_values[0] != True:
@@ -220,26 +246,38 @@ class AnimOPCODESeq(Scene):
             explain = f'{p_opcode.name} : Verifies if the last output value is <b><span fgcolor="{YELLOW}">True</span></b>'
         elif p_opcode == OPCODE.OP_EQUALVERIFY:
             read_output_values = self.read_output_stack_params(2)
+            
+            print("OP_EQUALVERIFY params : ", read_output_values)
+            
             self.tx_invalid = read_output_values[0] != read_output_values[1]
             
             if self.tx_invalid:
                 output = OPCODE.OP_EQUALVERIFY
-            else:
-                output = True
         
-            explain = f'{p_opcode.name} : Checks if <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b> are equals. The transaction fails if they are not equals'
+            explain = f'{p_opcode.name} : Checks if <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b> and <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b> are equals. The transaction fails if they are not equals'
         elif p_opcode == OPCODE.OP_CHECKSIG:
             read_output_values = self.read_output_stack_params(2)
             
-            # TODO construct a message
-            message = bytes.fromhex("304502201fd8abb11443f8b1b9a04e0495e0543d05611473a790c8939f089d073f90509a022100f4677825136605d732e2126d09a2d38c20c75946cd9fc239c0497e84c634e3dd01")
+            print("OP_CHECKSIG params : ", read_output_values)
+        
+            # the payload is the stack without the sig
+            payload = self.generate_sig_data(self.in_stack[1:])
             
-            explain = f'{p_opcode.name} : Checks the signature for message <b><span fgcolor="{YELLOW}">{message}</span></b>'
+            explain = f'{p_opcode.name} : Checks the signature for message <b><span fgcolor="{YELLOW}">{self.format_value_for_render(payload)}</span></b>'
+            
+            vk_hex = read_output_values[0]
+            sig = read_output_values[1]
 
-            verif_key = ecdsa.VerifyingKey.from_string(bytes.fromhex(read_output_values[0]), curve=ecdsa.SECP256k1)
+            verif_key = ecdsa.VerifyingKey.from_string(bytes.fromhex(vk_hex), curve=ecdsa.SECP256k1)
+                        
+            print("OP_CHECKSIG vk: ", verif_key.to_string("compressed").hex())
+            print("OP_CHECKSIG sig: ", sig)
+
             try:
-                verif_key.verify(bytes.fromhex(read_output_values[1]), message, hashlib.sha256, sigdecode=sigdecode_der)
+                verif_key.verify(bytes.fromhex(sig), payload, hashfunc=hashlib.sha256, sigdecode=sigdecode_der)
+                output = True
             except ecdsa.BadSignatureError:
+                print("Bad signature")
                 output = False
         elif p_opcode == OPCODE.OP_IF:
             read_output_values = self.read_output_stack_params(1)
@@ -250,11 +288,15 @@ class AnimOPCODESeq(Scene):
             else:
                 explain = f'{p_opcode.name} : Does not enter the IF block'
         elif p_opcode == OPCODE.OP_ENDIF:
-            # Does nothing, no output
+            # does nothing, no output
             explain = f'{p_opcode.name} : The current IF block ended'
+        elif p_opcode == OPCODE.OP_RETURN:
+            self.tx_invalid = True
+            output = p_opcode
+            explain = f'{p_opcode.name} : Automatically results in transaction fail'
         else:
             output = input_block[current_in_idx]
-            explain = f'Reads the data <b><span fgcolor="{YELLOW}">{output}</span></b> from input stack'
+            explain = f'Reads the data <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b> from input stack'
 
         if output is not None:
             self.output_stack.append(output)
@@ -278,3 +320,53 @@ class AnimOPCODESeq(Scene):
             values.append(self.output_stack.pop())
 
         return values
+    
+    def generate_puzzle(self):
+        script_sig_data = "satoshi"
+        self.in_stack = [script_sig_data, OPCODE.OP_HASH256, "da2876b3eb31edb4436fa4650673fc6f01f90de2f1793c4ec332b2387b09726f", OPCODE.OP_EQUAL]
+    
+    def generate_p2pk_script(self):
+        self.in_stack = [OPCODE.OP_CHECKSIG]
+        
+        sk = self.generate_secp256k1_keys()
+        vk_hex = sk.verifying_key.to_string("compressed").hex()
+        self.in_stack.insert(0, vk_hex)
+        
+        data = self.generate_sig_data(self.in_stack)
+        sig = sk.sign(data, hashfunc=hashlib.sha256, sigencode=sigencode_der)
+        sig_hex = sig.hex()
+        self.in_stack.insert(0, sig_hex)
+
+    def generate_p2pkh_script(self):
+        self.in_stack = [OPCODE.OP_DUP, OPCODE.OP_HASH160]
+        
+        sk = self.generate_secp256k1_keys()
+        vk_hex = sk.verifying_key.to_string("compressed").hex()
+        self.in_stack.insert(0, vk_hex)
+        
+        vk_hash = hashlib.new("ripemd160", str.encode(vk_hex)).hexdigest()
+        self.in_stack.extend([vk_hash, OPCODE.OP_EQUALVERIFY, OPCODE.OP_CHECKSIG])
+        
+        data = self.generate_sig_data(self.in_stack)
+        sig = sk.sign(data, hashfunc=hashlib.sha256, sigencode=sigencode_der)
+        sig_hex = sig.hex()
+        self.in_stack.insert(0, sig_hex)
+        
+    def generate_secp256k1_keys(self):
+        sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
+        sk.to_der()
+        return sk
+        
+    def generate_sig_data(self, payload):
+        h = hashlib.sha256()
+        h.update(str.encode(str(payload)))
+        return str.encode(h.hexdigest())
+    
+    def format_value_for_render(self, value):
+        if type(value) is bytes:
+            value = str(value)
+        if type(value) is str:
+            if len(value) < 6:
+                return value
+            return value[0:3] + "..." + value[len(value) - 3:]
+        return value
