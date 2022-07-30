@@ -8,7 +8,7 @@ A script that animates the execution of a given Bitcoin OPCODE
 
 ## Generate a video
 
-`manim -pql main.py AnimOPCODESeq  `
+`manim -pql main.py AnimOPCODESeq`
 
 ## Note
 
@@ -40,3 +40,7 @@ The message will be:
 sha256(sig pubkey OP_CHECKSIG)
 // will output 590de76ebef1dd0009e903494f57e2840992b8562bc76583efbd3608366ffed0
 ```
+
+## Translation
+
+Use `msgfmt locales/en/LC_MESSAGES/base.po -o locales/en/LC_MESSAGES/base.mo` to compile translations

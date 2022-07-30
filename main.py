@@ -1,9 +1,10 @@
-from ctypes import alignment
 from manim import *
 from enum import Enum
 import hashlib
 import ecdsa
 from ecdsa.util import sigdecode_der, sigencode_der
+
+import gettext
 
 class OPCODE(Enum):
     OP_0 = 0
@@ -58,6 +59,10 @@ tx_data = {
 
 class AnimOPCODESeq(Scene):
     def construct(self):
+        lang_fr = gettext.translation('base', localedir='./locales', languages=['fr'])
+        lang_fr.install()
+
+        self._ = lang_fr.gettext
         # TODO check if stack valid
         
         # self.in_stack = [OPCODE.OP_1, OPCODE.OP_DROP]
@@ -78,7 +83,7 @@ class AnimOPCODESeq(Scene):
         self.out_stack_mobj = []
         self.output_stack_mobj_grp = Group()
         
-        self.explain_mobj = MarkupText(f"Processing the SCRIPT", should_center=True).scale(0.4).to_corner(DOWN)
+        self.explain_mobj = MarkupText(self._("Processing the SCRIPT"), should_center=True).scale(0.4).to_corner(DOWN)
         self.play(FadeIn(self.explain_mobj))
             
         self.render_input_stack(self.in_stack)
@@ -90,12 +95,12 @@ class AnimOPCODESeq(Scene):
         input_stack_framebox = SurroundingRectangle(input_mobj_grp, buff=.5, color=BLUE, corner_radius=.15)
         self.play(Create(input_stack_framebox))
         
-        input_stack_title = Text("Input Stack (SCRIPT)", color=BLUE).scale(.6).next_to(input_stack_framebox, UP).align_to(input_stack_framebox, LEFT)
+        input_stack_title = Text(self._("Input Stack (SCRIPT)"), color=BLUE).scale(.6).next_to(input_stack_framebox, UP).align_to(input_stack_framebox, LEFT)
         self.play(Write(input_stack_title))
         
         self.render_output_stack(self.in_stack)
         
-        transitive_text = Text("Finishing the SCRIPT").scale(0.4).to_corner(DOWN)
+        transitive_text = Text(self._("Finishing the SCRIPT")).scale(0.4).to_corner(DOWN)
         self.play(
             Transform(self.explain_mobj, transitive_text)
         )
@@ -103,7 +108,7 @@ class AnimOPCODESeq(Scene):
         output_stack_framebox = SurroundingRectangle(self.output_stack_mobj_grp, buff=.5, corner_radius=.15)
         self.play(Create(output_stack_framebox))
 
-        output_stack_title = Text("Output Stack (RESULT)", color=YELLOW).scale(.6).next_to(output_stack_framebox, UP).align_to(output_stack_framebox, LEFT)
+        output_stack_title = Text(self._("Output Stack (RESULT)"), color=YELLOW).scale(.6).next_to(output_stack_framebox, UP).align_to(output_stack_framebox, LEFT)
         self.play(Write(output_stack_title))        
         
         last_output = None if len(self.output_stack) == 0 else self.output_stack[-1]
@@ -111,16 +116,16 @@ class AnimOPCODESeq(Scene):
         end_text_group = VGroup()
         if self.tx_invalid:
             print(f"This tx in invalid, failed at {last_output.name}, reason : {self.tx_invalid_reason}")
-            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b> ')
+            end_text = MarkupText(self._('This transaction fails because of {value}').format(value=f'<b><span fgcolor="{YELLOW}">{last_output.name}</span></b>'))
             end_text_group.add(end_text)
             if self.tx_invalid_reason is not None:
                 end_text_group.add(MarkupText(self.tx_invalid_reason).scale(0.8).next_to(end_text, DOWN))
         else:
             print(f"This tx ended with {last_output}")
             if last_output == True:
-                end_text_group.add(MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction is valid!'))
+                end_text_group.add(MarkupText(self._('The Result is {result}. This transaction is valid!').format(result=f'<b><span fgcolor="{YELLOW}">{last_output}</span></b>')))
             else:
-                end_text_group.add(MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction fails!'))
+                end_text_group.add(MarkupText(self._('The Result is {result}. This transaction fails!').format(result=f'<b><span fgcolor="{YELLOW}">{last_output}</span></b>')))
             
         print("Final output stack : ", self.output_stack)
         
