@@ -33,6 +33,7 @@ class OPCODE(Enum):
     OP_ENDIF = 103
     OP_VERIFY = 105
     OP_RETURN = 106
+    OP_DROP = 117
     OP_DUP = 118
     OP_EQUAL = 135
     OP_EQUALVERIFY = 136
@@ -44,20 +45,26 @@ class OPCODE(Enum):
     OP_HASH160 = 169
     OP_HASH256 = 170
     OP_CHECKSIG = 172
+    OP_CLTV = 177
     
 stack_bottom_margin = DOWN / 5
 stack_top_elt = UP * 3
 
+# TODO fetch this from a .yml
+tx_data = {
+    "n_lock_time": 4000,
+    "n_sequence": 0xFFFFFFFF
+}
+
 class AnimOPCODESeq(Scene):
     def construct(self):
         # TODO check if stack valid
-        # TODO Freezing funds until a time in the future
-        # TODO Incentivized finding of hash collisions
         
-        # self.in_stack = [OPCODE.OP_1, OPCODE.OP_IF, [OPCODE.OP_10, OPCODE.OP_11, OPCODE.OP_IF, [OPCODE.OP_13], OPCODE.OP_ENDIF], OPCODE.OP_ENDIF]
-        self.generate_p2pkh_script()
+        # self.in_stack = [OPCODE.OP_1, OPCODE.OP_DROP]
+        # self.generate_p2pkh_script()
         # self.generate_p2pk_script()
         # self.generate_puzzle()
+        self.generate_freezing_funds()
         
         print("SCRIPT : ", self.in_stack)
 
@@ -65,6 +72,7 @@ class AnimOPCODESeq(Scene):
         self.input_block_level = -1
         self.current_in_stack_mobj_idx = -1
         self.tx_invalid = False
+        self.tx_invalid_reason = None
         
         self.in_stack_mobj = []
         self.out_stack_mobj = []
@@ -87,6 +95,11 @@ class AnimOPCODESeq(Scene):
         
         self.render_output_stack(self.in_stack)
         
+        transitive_text = Text("Finishing the SCRIPT").scale(0.4).to_corner(DOWN)
+        self.play(
+            Transform(self.explain_mobj, transitive_text)
+        )
+        
         output_stack_framebox = SurroundingRectangle(self.output_stack_mobj_grp, buff=.5, corner_radius=.15)
         self.play(Create(output_stack_framebox))
 
@@ -95,22 +108,26 @@ class AnimOPCODESeq(Scene):
         
         last_output = None if len(self.output_stack) == 0 else self.output_stack[-1]
         
+        end_text_group = VGroup()
         if self.tx_invalid:
-            print(f"This tx in invalid, failed at {last_output.name}")
-            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b>', fill_opacity=1)
+            print(f"This tx in invalid, failed at {last_output.name}, reason : {self.tx_invalid_reason}")
+            end_text = MarkupText(f'This transaction fails because of <b><span fgcolor="{YELLOW}">{last_output.name}</span></b> ')
+            end_text_group.add(end_text)
+            if self.tx_invalid_reason is not None:
+                end_text_group.add(MarkupText(self.tx_invalid_reason).scale(0.8).next_to(end_text, DOWN))
         else:
             print(f"This tx ended with {last_output}")
             if last_output == True:
-                end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction is valid!')
+                end_text_group.add(MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction is valid!'))
             else:
-                end_text = MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction fails!')
+                end_text_group.add(MarkupText(f'The Result is <b><span fgcolor="{YELLOW}">{last_output}</span></b>. This transaction fails!'))
             
         print("Final output stack : ", self.output_stack)
         
-        end_text.add_background_rectangle(color=BLACK, opacity=.9)
+        end_text_group.scale(0.8).to_corner(DOWN)
 
         self.play(
-            Transform(self.explain_mobj, end_text)
+            Transform(self.explain_mobj, end_text_group)
         )
         
     def render_input_stack(self, input_block):
@@ -121,10 +138,13 @@ class AnimOPCODESeq(Scene):
                 self.render_input_stack(in_stack_value)
                 continue
             name = f"&lt;{self.format_value_for_render(in_stack_value)}&gt;"
-            if type(in_stack_value) is not str:
+            if type(in_stack_value) is OPCODE:
                 name = f"{in_stack_value.name}"
                 
-            opcode_text = MarkupText(name).scale(0.6)
+            if len(name) > 18:
+                name = name[:17] + "..."
+                
+            opcode_text = MarkupText(name).scale(0.5)
             if len(self.in_stack_mobj) == 0:
                 opcode_text.to_corner(stack_top_elt).shift(LEFT * 3)
             else:
@@ -180,7 +200,7 @@ class AnimOPCODESeq(Scene):
 
         output_text = None
         if len(write_values) > 0:
-            output_text = MarkupText(f"{self.format_value_for_render(str(write_values[-1]))}").scale(0.6)
+            output_text = MarkupText(f"{self.format_value_for_render(str(write_values[-1]))}").scale(0.5)
         
         if output_text is not None:
             if len(self.out_stack_mobj) == 0:
@@ -280,6 +300,9 @@ class AnimOPCODESeq(Scene):
         elif p_opcode == OPCODE.OP_DUP:
             output = self.output_stack[-1]
             explain = f'{p_opcode.name} : Duplicates the value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b>'
+        elif p_opcode == OPCODE.OP_DROP:
+            read_output_values = self.read_output_stack_params(1)
+            explain = f'{p_opcode.name} : Removes the last output value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>'
         elif p_opcode == OPCODE.OP_VERIFY:
             read_output_values = self.read_output_stack_params(1)
             if read_output_values[0] != True:
@@ -337,6 +360,29 @@ class AnimOPCODESeq(Scene):
             self.tx_invalid = True
             output = p_opcode
             explain = f'{p_opcode.name} : Automatically results in transaction fail'
+        elif p_opcode == OPCODE.OP_CLTV:
+            expire_time = self.output_stack[-1]
+            
+            if expire_time is None or expire_time < 0:
+                self.tx_invalid = True
+                self.tx_invalid_reason = f'The value is empty or less than 0'
+            elif expire_time > tx_data["n_lock_time"]:
+                self.tx_invalid = True
+                self.tx_invalid_reason = f'The given expiry time {expire_time} is greater than nLockTime {tx_data["n_lock_time"]}'
+            elif expire_time >= 500000000 and tx_data["n_lock_time"] < 500000000:
+                self.tx_invalid = True
+                self.tx_invalid_reason = f'The given expiry time is greater than 500000000 but nLockTime is less than 500000000'
+            elif expire_time < 500000000 and tx_data["n_lock_time"] >= 500000000:
+                self.tx_invalid = True
+                self.tx_invalid_reason = f'The nLockTime is greater than 500000000 but given expiry time is less than 500000000'
+            elif tx_data["n_lock_time"] == 0xFFFFFFFF:
+                self.tx_invalid = True
+                self.tx_invalid_reason = f'The nSequence is 0xFFFFFFFF'
+                
+            if self.tx_invalid:
+                output = p_opcode
+            
+            explain = f'{p_opcode.name} : Check lock time for value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(expire_time)}</span></b>, nLockTime of the transaction is <b><span fgcolor="{YELLOW}">{tx_data["n_lock_time"]}</span></b>'
         else:
             output = input_block[current_in_idx]
             explain = f'Reads the data <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b> from input stack'
@@ -395,6 +441,23 @@ class AnimOPCODESeq(Scene):
         sig_hex = sig.hex()
         self.in_stack.insert(0, sig_hex)
         
+    def generate_freezing_funds(self):
+        self.in_stack = [OPCODE.OP_CLTV, OPCODE.OP_DROP, OPCODE.OP_DUP, OPCODE.OP_HASH160]
+        
+        self.in_stack.insert(0, 2000) # expire time
+        
+        sk = self.generate_secp256k1_keys()
+        vk_hex = sk.verifying_key.to_string("compressed").hex()
+        self.in_stack.insert(0, vk_hex)
+        
+        vk_hash = hashlib.new("ripemd160", str.encode(vk_hex)).hexdigest()
+        self.in_stack.extend([vk_hash, OPCODE.OP_EQUALVERIFY, OPCODE.OP_CHECKSIG])
+        
+        data = self.generate_sig_data(self.in_stack)
+        sig = sk.sign(data, hashfunc=hashlib.sha256, sigencode=sigencode_der)
+        sig_hex = sig.hex()
+        self.in_stack.insert(0, sig_hex)
+        
     def generate_secp256k1_keys(self):
         sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
         sk.to_der()
@@ -406,10 +469,12 @@ class AnimOPCODESeq(Scene):
         return str.encode(h.hexdigest())
     
     def format_value_for_render(self, value):
-        if type(value) is bytes:
-            value = str(value)
         if type(value) is str:
             if len(value) < 6:
                 return value
             return value[0:3] + "..." + value[len(value) - 3:]
-        return value
+        
+        try:
+            return value.decode()[0:3] + "..." + value.decode()[len(value) - 3:]
+        except (UnicodeDecodeError, AttributeError):
+            return value
