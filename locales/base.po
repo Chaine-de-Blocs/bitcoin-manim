@@ -8,13 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-30 16:03+0200\n"
+"POT-Creation-Date: 2022-07-31 14:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=Utf-8\n"
+"Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: main.py:86
@@ -46,4 +46,147 @@ msgstr ""
 #: main.py:128
 #, python-brace-format
 msgid "The Result is {result}. This transaction fails!"
+msgstr ""
+
+#: main.py:274
+#, python-brace-format
+msgid "{op_code_name} : Are the values {value_1} and {value_2} equals?"
+msgstr ""
+
+#: main.py:278
+#, python-brace-format
+msgid "{op_code_name} : Adds the values {value_1} and {value_2}"
+msgstr ""
+
+#: main.py:282
+#, python-brace-format
+msgid "{op_code_name} : Substacts the values {value_1} and {value_2}"
+msgstr ""
+
+#: main.py:286
+#, python-brace-format
+msgid "{op_code_name} : Multiplies the values {value_1} and {value_2}"
+msgstr ""
+
+#: main.py:290
+#, python-brace-format
+msgid "{op_code_name} : Divides the values {value_1} and {value_2}"
+msgstr ""
+
+#: main.py:294
+#, python-brace-format
+msgid "{op_code_name} : Modulos the values {value_1} and {value_2}"
+msgstr ""
+
+#: main.py:300
+#, python-brace-format
+msgid "{op_code_name} : SHA256 Hashes the value {value_1}"
+msgstr ""
+
+#: main.py:304
+#, python-brace-format
+msgid "{op_code_name} : RIPEMD160 Hashes the value {value_1}"
+msgstr ""
+
+#: main.py:307
+#, python-brace-format
+msgid "{op_code_name} : Duplicates the value {value_1}"
+msgstr ""
+
+#: main.py:310
+#, python-brace-format
+msgid "{op_code_name} : Removes the last output value {value_1}"
+msgstr ""
+
+#: main.py:317
+#, python-brace-format
+msgid "{op_code_name} : Verifies if the last output value is {value_1}"
+msgstr ""
+
+#: main.py:328
+#, python-brace-format
+msgid ""
+"{op_code_name} : Checks if {value_1} and {value_2} are equals. The "
+"transaction fails if they are not equals"
+msgstr ""
+
+#: main.py:337
+#, python-brace-format
+msgid "{op_code_name} : Checks the signature for message {value_1}"
+msgstr ""
+
+#: main.py:358
+#, python-brace-format
+msgid "{op_code_name} : Enters the IF block"
+msgstr ""
+
+#: main.py:360
+#, python-brace-format
+msgid "{op_code_name} : Does not enter the IF block"
+msgstr ""
+
+#: main.py:363
+#, python-brace-format
+msgid "{op_code_name} : The current IF block ended"
+msgstr ""
+
+#: main.py:367
+#, python-brace-format
+msgid "{op_code_name} : Automatically results in transaction fail"
+msgstr ""
+
+#: main.py:373
+msgid "The value is empty or less than 0"
+msgstr ""
+
+#: main.py:376
+#, python-brace-format
+msgid ""
+"The given expiry time {expire_time} is greater than nLockTime {lock_time}"
+msgstr ""
+
+#: main.py:379
+msgid ""
+"The given expiry time is greater than 500000000 but nLockTime is less than "
+"500000000"
+msgstr ""
+
+#: main.py:382
+msgid ""
+"The nLockTime is greater than 500000000 but given expiry time is less than "
+"500000000"
+msgstr ""
+
+#: main.py:385
+msgid "The nSequence is 0xFFFFFFFF"
+msgstr ""
+
+#: main.py:390
+#, python-brace-format
+msgid ""
+"{op_code_name} : Check lock time for value {value_1}, nLockTime of the "
+"transaction is {n_lock_time}"
+msgstr ""
+
+#: main.py:393
+#, python-brace-format
+msgid "Reads the data {value_1} from input stack"
+msgstr ""
+
+#: main.py:400
+#, python-brace-format
+msgid "Not handled OPCODE, got {p_opcode}, and input block {input_block}"
+msgstr ""
+
+#: main.py:406
+msgid "0 or False"
+msgstr ""
+
+#: main.py:408
+msgid "1 or True"
+msgstr ""
+
+#: main.py:409
+#, python-brace-format
+msgid "{op_code_name} : Pushes the value {value_1}"
 msgstr ""

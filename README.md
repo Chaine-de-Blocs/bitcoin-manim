@@ -22,7 +22,7 @@ Bitcoin rely on `der` encoding so make sure to generate signatures with `der` en
 
 ## Limitations
 
-This script only take in SCRIPT (OPCODE input Stack) and simulate any data that is normally fetched from Bitcoin.
+This script only takes in SCRIPT (OPCODE input Stack) and simulate any data that is normally fetched from Bitcoin.
 
 ### OP_CHECKSIG
 

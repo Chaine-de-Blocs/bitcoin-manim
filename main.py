@@ -70,7 +70,7 @@ class AnimOPCODESeq(Scene):
         # self.generate_p2pk_script()
         # self.generate_puzzle()
         self.generate_freezing_funds()
-        
+
         print("SCRIPT : ", self.in_stack)
 
         self.output_stack = []
@@ -237,7 +237,7 @@ class AnimOPCODESeq(Scene):
             read_values_brace = Brace(read_values_grp, sharpness=.1, direction=dir_line.rotate(PI * 2).get_unit_vector())
             self.play(FadeIn(read_values_brace, shift=RIGHT / 4))
             
-            read_values_text = Text(f"{opcode.name} params").scale(0.3).next_to(read_values_brace, RIGHT)
+            read_values_text = Text(self._("{op_code_name} params").format(op_code_name=opcode.name)).scale(0.3).next_to(read_values_brace, RIGHT)
             self.play(Write(read_values_text))
             
             # updates the stack it read values and write some
@@ -271,50 +271,50 @@ class AnimOPCODESeq(Scene):
         elif p_opcode == OPCODE.OP_EQUAL:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] == read_output_values[1]
-            explain = f'{p_opcode.name} : Are the values <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b> and <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b> equals?'
+            explain = self._('{op_code_name} : Are the values {value_1} and {value_2} equals?').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b>')
         elif p_opcode == OPCODE.OP_ADD:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] + read_output_values[1]
-            explain = f'{p_opcode.name} : Adds the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>'
+            explain = self._('{op_code_name} : Adds the values {value_1} and {value_2}').format(op_code_name=p_opcode.name,value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>')
         elif p_opcode == OPCODE.OP_SUB:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] - read_output_values[1]
-            explain = f'{p_opcode.name} : Substacts the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>'
+            explain = self._('{op_code_name} : Substacts the values {value_1} and {value_2}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>')
         elif p_opcode == OPCODE.OP_MUL:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] - read_output_values[1]
-            explain = f'{p_opcode.name} : Multiplies the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>'
+            explain = self._('{op_code_name} : Multiplies the values {value_1} and {value_2}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>')
         elif p_opcode == OPCODE.OP_DIV:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] - read_output_values[1]
-            explain = f'{p_opcode.name} : Divides the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>'
+            explain = self._('{op_code_name} : Divides the values {value_1} and {value_2}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>')
         elif p_opcode == OPCODE.OP_MOD:
             read_output_values = self.read_output_stack_params(2)
             output = read_output_values[0] - read_output_values[1]
-            explain = f'{p_opcode.name} : Modulos the values <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b> and <b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>'
+            explain = self._('{op_code_name} : Modulos the values {value_1} and {value_2}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{read_output_values[1]}</span></b>')
         elif p_opcode == OPCODE.OP_HASH256:
             read_output_values = self.read_output_stack_params(1)
             h = hashlib.sha256()
             h.update(str.encode(read_output_values[0]))
             output = h.hexdigest()
-            explain = f'{p_opcode.name} : SHA256 Hashes the value <b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>'
+            explain = self._('{op_code_name} : SHA256 Hashes the value {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{read_output_values[0]}</span></b>')
         elif p_opcode == OPCODE.OP_HASH160:
             read_output_values = self.read_output_stack_params(1)
             output = hashlib.new("ripemd160", str.encode(read_output_values[0])).hexdigest()
-            explain = f'{p_opcode.name} : RIPEMD160 Hashes the value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>'
+            explain = self._('{op_code_name} : RIPEMD160 Hashes the value {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>')
         elif p_opcode == OPCODE.OP_DUP:
             output = self.output_stack[-1]
-            explain = f'{p_opcode.name} : Duplicates the value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b>'
+            explain = self._('{op_code_name} : Duplicates the value {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b>')
         elif p_opcode == OPCODE.OP_DROP:
             read_output_values = self.read_output_stack_params(1)
-            explain = f'{p_opcode.name} : Removes the last output value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>'
+            explain = self._('{op_code_name} : Removes the last output value {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>')
         elif p_opcode == OPCODE.OP_VERIFY:
             read_output_values = self.read_output_stack_params(1)
             if read_output_values[0] != True:
                 self.tx_invalid = True
                 output = OPCODE.OP_VERIFY
                 
-            explain = f'{p_opcode.name} : Verifies if the last output value is <b><span fgcolor="{YELLOW}">True</span></b>'
+            explain = self._('{op_code_name} : Verifies if the last output value is {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">True</span></b>')
         elif p_opcode == OPCODE.OP_EQUALVERIFY:
             read_output_values = self.read_output_stack_params(2)
             
@@ -325,7 +325,7 @@ class AnimOPCODESeq(Scene):
             if self.tx_invalid:
                 output = OPCODE.OP_EQUALVERIFY
         
-            explain = f'{p_opcode.name} : Checks if <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b> and <b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b> are equals. The transaction fails if they are not equals'
+            explain = self._('{op_code_name} : Checks if {value_1} and {value_2} are equals. The transaction fails if they are not equals').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[0])}</span></b>', value_2=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(read_output_values[1])}</span></b>')
         elif p_opcode == OPCODE.OP_CHECKSIG:
             read_output_values = self.read_output_stack_params(2)
             
@@ -334,7 +334,7 @@ class AnimOPCODESeq(Scene):
             # the payload is the stack without the sig
             payload = self.generate_sig_data(self.in_stack[1:])
             
-            explain = f'{p_opcode.name} : Checks the signature for message <b><span fgcolor="{YELLOW}">{self.format_value_for_render(payload)}</span></b>'
+            explain = self._('{op_code_name} : Checks the signature for message {value_1}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(payload)}</span></b>')
             
             vk_hex = read_output_values[0]
             sig = read_output_values[1]
@@ -355,58 +355,58 @@ class AnimOPCODESeq(Scene):
             if read_output_values[0] != 0:
                 # enters a new block
                 enter_next_input_block = True
-                explain = f'{p_opcode.name} : Enters the IF block'
+                explain = self._('{op_code_name} : Enters the IF block').format(op_code_name=p_opcode.name)
             else:
-                explain = f'{p_opcode.name} : Does not enter the IF block'
+                explain = self._('{op_code_name} : Does not enter the IF block').format(op_code_name=p_opcode.name)
         elif p_opcode == OPCODE.OP_ENDIF:
             # does nothing, no output
-            explain = f'{p_opcode.name} : The current IF block ended'
+            explain = self._('{op_code_name} : The current IF block ended').format(op_code_name=p_opcode.name)
         elif p_opcode == OPCODE.OP_RETURN:
             self.tx_invalid = True
             output = p_opcode
-            explain = f'{p_opcode.name} : Automatically results in transaction fail'
+            explain = self._('{op_code_name} : Automatically results in transaction fail').format(op_code_name=p_opcode.name)
         elif p_opcode == OPCODE.OP_CLTV:
             expire_time = self.output_stack[-1]
             
             if expire_time is None or expire_time < 0:
                 self.tx_invalid = True
-                self.tx_invalid_reason = f'The value is empty or less than 0'
+                self.tx_invalid_reason = self._('The value is empty or less than 0')
             elif expire_time > tx_data["n_lock_time"]:
                 self.tx_invalid = True
-                self.tx_invalid_reason = f'The given expiry time {expire_time} is greater than nLockTime {tx_data["n_lock_time"]}'
+                self.tx_invalid_reason = self._('The given expiry time {expire_time} is greater than nLockTime {lock_time}').format(expire_time=expire_time, lock_time=tx_data["n_lock_time"])
             elif expire_time >= 500000000 and tx_data["n_lock_time"] < 500000000:
                 self.tx_invalid = True
-                self.tx_invalid_reason = f'The given expiry time is greater than 500000000 but nLockTime is less than 500000000'
+                self.tx_invalid_reason = self._('The given expiry time is greater than 500000000 but nLockTime is less than 500000000')
             elif expire_time < 500000000 and tx_data["n_lock_time"] >= 500000000:
                 self.tx_invalid = True
-                self.tx_invalid_reason = f'The nLockTime is greater than 500000000 but given expiry time is less than 500000000'
+                self.tx_invalid_reason = self._('The nLockTime is greater than 500000000 but given expiry time is less than 500000000')
             elif tx_data["n_lock_time"] == 0xFFFFFFFF:
                 self.tx_invalid = True
-                self.tx_invalid_reason = f'The nSequence is 0xFFFFFFFF'
+                self.tx_invalid_reason = self._('The nSequence is 0xFFFFFFFF')
                 
             if self.tx_invalid:
                 output = p_opcode
             
-            explain = f'{p_opcode.name} : Check lock time for value <b><span fgcolor="{YELLOW}">{self.format_value_for_render(expire_time)}</span></b>, nLockTime of the transaction is <b><span fgcolor="{YELLOW}">{tx_data["n_lock_time"]}</span></b>'
+            explain = self._('{op_code_name} : Check lock time for value {value_1}, nLockTime of the transaction is {n_lock_time}').format(op_code_name=p_opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(expire_time)}</span></b>', n_lock_time=f'<b><span fgcolor="{YELLOW}">{tx_data["n_lock_time"]}</span></b>')
         else:
             output = input_block[current_in_idx]
-            explain = f'Reads the data <b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b> from input stack'
+            explain = self._('Reads the data {value_1} from input stack').format(value_1=f'<b><span fgcolor="{YELLOW}">{self.format_value_for_render(output)}</span></b>')
 
         if output is not None:
             self.output_stack.append(output)
             write_output_values.append(output)
             
         if explain is None:
-            explain = f'Not handled OPCODE, got {p_opcode}, and input block {input_block}'
+            explain = self._('Not handled OPCODE, got {p_opcode}, and input block {input_block}').format(op_code=p_opcode, input_block=input_block)
 
         return read_output_values, write_output_values, explain, enter_next_input_block
     
     def get_explain_for_push_value(self, opcode, value):
         if value == 0:
-            value = "0 or False"
+            value = self._("0 or False")
         if value == 1:
-            value = "1 or True"
-        return f'{opcode.name} : Pushes the value <b><span fgcolor="{YELLOW}">{value}</span></b>'
+            value = self._("1 or True")
+        return self._('{op_code_name} : Pushes the value {value_1}').format(op_code_name=opcode.name, value_1=f'<b><span fgcolor="{YELLOW}">{value}</span></b>')
     
     def read_output_stack_params(self, nb_params):
         values = []

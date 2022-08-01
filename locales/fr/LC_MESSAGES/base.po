@@ -1,49 +1,183 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# JONATHAN SERRA <jonathan@blocs.fr>, 2022.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-30 16:03+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2022-07-31 14:34+0200\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=Utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: main.py:86
 msgid "Processing the SCRIPT"
-msgstr ""
+msgstr "Traitement du SCRIPT"
 
 #: main.py:98
 msgid "Input Stack (SCRIPT)"
-msgstr ""
+msgstr "Input Stack (SCRIPT)"
 
 #: main.py:103
 msgid "Finishing the SCRIPT"
-msgstr ""
+msgstr "Finalisation du SCRIPT"
 
 #: main.py:111
 msgid "Output Stack (RESULT)"
-msgstr ""
+msgstr "Valeurs de sortie"
 
 #: main.py:119
 #, python-brace-format
 msgid "This transaction fails because of {value}"
-msgstr ""
+msgstr "Cette transaction a échoué avec la valeur {value}"
 
 #: main.py:126
 #, python-brace-format
 msgid "The Result is {result}. This transaction is valid!"
-msgstr "Le résultat est {result}"
+msgstr "Le résultat est {result}. Cette transaction est valide !"
 
 #: main.py:128
 #, python-brace-format
 msgid "The Result is {result}. This transaction fails!"
-msgstr "Le résultat est {result}"
+msgstr "Le résultat est {result}. Cette transaction est invalide !"
+
+#: main.py:274
+#, python-brace-format
+msgid "{op_code_name} : Are the values {value_1} and {value_2} equals?"
+msgstr "{op_code_name} : Est-ce que les valeurs {value_1} et {value_2} sont égales ?"
+
+#: main.py:278
+#, python-brace-format
+msgid "{op_code_name} : Adds the values {value_1} and {value_2}"
+msgstr "{op_code_name} : Additionne les valeurs {value_1} et {value_2}"
+
+#: main.py:282
+#, python-brace-format
+msgid "{op_code_name} : Substacts the values {value_1} and {value_2}"
+msgstr "{op_code_name} : Soustrait les valeurs {value_1} et {value_2}"
+
+#: main.py:286
+#, python-brace-format
+msgid "{op_code_name} : Multiplies the values {value_1} and {value_2}"
+msgstr "{op_code_name} : Multiplie les valeurs {value_1} et {value_2}"
+
+#: main.py:290
+#, python-brace-format
+msgid "{op_code_name} : Divides the values {value_1} and {value_2}"
+msgstr "{op_code_name} : Divise les valeurs {value_1} et {value_2}"
+
+#: main.py:294
+#, python-brace-format
+msgid "{op_code_name} : Modulos the values {value_1} and {value_2}"
+msgstr "{op_code_name} : Divise les valeurs {value_1} et {value_2}, puis retourne le reste de la division"
+
+#: main.py:300
+#, python-brace-format
+msgid "{op_code_name} : SHA256 Hashes the value {value_1}"
+msgstr "{op_code_name} : Hash la valeur {value_1} avec SHA256"
+
+#: main.py:304
+#, python-brace-format
+msgid "{op_code_name} : RIPEMD160 Hashes the value {value_1}"
+msgstr "{op_code_name} : Hash la valeur {value_1} avec RIPEMD160"
+
+#: main.py:307
+#, python-brace-format
+msgid "{op_code_name} : Duplicates the value {value_1}"
+msgstr "{op_code_name} : Duplique la valeur {value_1}"
+
+#: main.py:310
+#, python-brace-format
+msgid "{op_code_name} : Removes the last output value {value_1}"
+msgstr "{op_code_name} : Supprime la dernière valeur {value_1}"
+
+#: main.py:317
+#, python-brace-format
+msgid "{op_code_name} : Verifies if the last output value is {value_1}"
+msgstr "{op_code_name} : Vérifie que la derrnière valeur de sortie est {value_1}"
+
+#: main.py:328
+#, python-brace-format
+msgid "{op_code_name} : Checks if {value_1} and {value_2} are equals. The transaction fails if they are not equals"
+msgstr "{op_code_name} : Contrôle si les valeurs {value_1} et {value_2} sont égales. La transaction échoue si elles ne sont pas égales"
+
+#: main.py:337
+#, python-brace-format
+msgid "{op_code_name} : Checks the signature for message {value_1}"
+msgstr "{op_code_name} : Contrôle la signature ECDSA (secp256k1) pour le message {value_1}"
+
+#: main.py:358
+#, python-brace-format
+msgid "{op_code_name} : Enters the IF block"
+msgstr "{op_code_name} : Entre dans la condition IF"
+
+#: main.py:360
+#, python-brace-format
+msgid "{op_code_name} : Does not enter the IF block"
+msgstr "{op_code_name} : N'entre pas dans la condition IF"
+
+#: main.py:363
+#, python-brace-format
+msgid "{op_code_name} : The current IF block ended"
+msgstr "{op_code_name} : Fin de la condition IF précédente"
+
+#: main.py:367
+#, python-brace-format
+msgid "{op_code_name} : Automatically results in transaction fail"
+msgstr "{op_code_name} : Résulte automatiquement en échec de transaction"
+
+#: main.py:373
+msgid "The value is empty or less than 0"
+msgstr "La valeur est vide ou inférieure à 0"
+
+#: main.py:376
+#, python-brace-format
+msgid "The given expiry time {expire_time} is greater than nLockTime {lock_time}"
+msgstr "Le temps d'expiration {expire_time} est supérieur au nLockTime de {lock_time}"
+
+#: main.py:379
+msgid "The given expiry time is greater than 500000000 but nLockTime is less than 500000000"
+msgstr "Le temps d'expiration fourni est plus grand que 500 000 000 mais le nLockTime est inférieur à 500 000 000"
+
+#: main.py:382
+msgid "The nLockTime is greater than 500000000 but given expiry time is less than 500000000"
+msgstr "Le nLockTime est supérieur à 500 000 000 mais le temps d'expiration fourni est inférieur à 500 000 000"
+
+#: main.py:385
+msgid "The nSequence is 0xFFFFFFFF"
+msgstr "Le nSequence est 0xFFFFFFFF"
+
+#: main.py:390
+#, python-brace-format
+msgid "{op_code_name} : Check lock time for value {value_1}, nLockTime of the transaction is {n_lock_time}"
+msgstr "{op_code_name} : Contrôle le lock time {value_1}, le nLockTime de la transaction est de {n_lock_time}"
+
+#: main.py:393
+#, python-brace-format
+msgid "Reads the data {value_1} from input stack"
+msgstr "Lecture des valeurs {value_1} de l'input stack"
+
+#: main.py:400
+#, python-brace-format
+msgid "Not handled OPCODE, got {p_opcode}, and input block {input_block}"
+msgstr "Cet OPCODE n'est pas connu, l'OPCODE reçu est {p_opcode}, et le bloc en Input est {input_block}"
+
+#: main.py:406
+msgid "0 or False"
+msgstr "0 ou False"
+
+#: main.py:408
+msgid "1 or True"
+msgstr "1 ou True"
+
+#: main.py:409
+#, python-brace-format
+msgid "{op_code_name} : Pushes the value {value_1}"
+msgstr "{op_code_name} : Ajoute la valeur {value_1}"
+
+msgid "{op_code_name} params"
+msgstr "Paramètre de {op_code_name}"
