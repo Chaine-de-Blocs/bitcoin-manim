@@ -159,7 +159,7 @@ msgstr "{op_code_name} : Contrôle le lock time {value_1}, le nLockTime de la tr
 #: main.py:393
 #, python-brace-format
 msgid "Reads the data {value_1} from input stack"
-msgstr "Lecture des valeurs {value_1} de l'input stack"
+msgstr "Lecture de la valeur {value_1} de l'input stack"
 
 #: main.py:400
 #, python-brace-format

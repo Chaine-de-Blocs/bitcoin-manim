@@ -51,7 +51,6 @@ class OPCODE(Enum):
 stack_bottom_margin = DOWN / 5
 stack_top_elt = UP * 3
 
-# TODO fetch this from a .yml
 tx_data = {
     "n_lock_time": 4000,
     "n_sequence": 0xFFFFFFFF
@@ -63,7 +62,6 @@ class AnimOPCODESeq(Scene):
         lang_fr.install()
 
         self._ = lang_fr.gettext
-        # TODO check if stack valid
         
         # self.in_stack = [OPCODE.OP_1, OPCODE.OP_DROP]
         # self.generate_p2pkh_script()
@@ -98,6 +96,9 @@ class AnimOPCODESeq(Scene):
         input_stack_title = Text(self._("Input Stack (SCRIPT)"), color=BLUE).scale(.6).next_to(input_stack_framebox, UP).align_to(input_stack_framebox, LEFT)
         self.play(Write(input_stack_title))
         
+        output_stack_title = Text(self._("Output Stack (RESULT)"), color=YELLOW).scale(.6).next_to(input_stack_title, RIGHT).shift(RIGHT * 2)
+        self.play(Write(output_stack_title))
+        
         self.render_output_stack(self.in_stack)
         
         transitive_text = Text(self._("Finishing the SCRIPT")).scale(0.4).to_corner(DOWN)
@@ -106,10 +107,7 @@ class AnimOPCODESeq(Scene):
         )
         
         output_stack_framebox = SurroundingRectangle(self.output_stack_mobj_grp, buff=.5, corner_radius=.15)
-        self.play(Create(output_stack_framebox))
-
-        output_stack_title = Text(self._("Output Stack (RESULT)"), color=YELLOW).scale(.6).next_to(output_stack_framebox, UP).align_to(output_stack_framebox, LEFT)
-        self.play(Write(output_stack_title))        
+        self.play(Create(output_stack_framebox))      
         
         last_output = None if len(self.output_stack) == 0 else self.output_stack[-1]
         
@@ -183,12 +181,15 @@ class AnimOPCODESeq(Scene):
             )
             
             new_explain_mobj = MarkupText(explain, should_center=True).scale(0.4).to_corner(DOWN)
+            selected_input = self.in_stack_mobj[self.current_in_stack_mobj_idx]
             self.play(
-                Indicate(self.in_stack_mobj[self.current_in_stack_mobj_idx]),
+                Indicate(selected_input),
                 Transform(self.explain_mobj, new_explain_mobj)
             )
             
             self.update_output_mobj(read_output_values, write_output_values, in_stack_value)
+            
+            self.play(selected_input.animate.set_fill(GRAY))
         
             if enter_next_input_block:
                 self.render_output_stack(input_block[idx + 1])
