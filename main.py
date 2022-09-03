@@ -58,12 +58,17 @@ tx_data = {
 
 class AnimOPCODESeq(Scene):
     def construct(self):
-        lang_fr = gettext.translation('base', localedir='./locales', languages=['fr'])
-        lang_fr.install()
-
-        self._ = lang_fr.gettext
+        # Define lang here
+        # lang = gettext.translation('base', localedir='./locales', languages=['en'])
+        lang = gettext.translation('base', localedir='./locales', languages=['fr'])
         
+        lang.install()
+        self._ = lang.gettext
+        
+        # Custom INPUT
         # self.in_stack = [OPCODE.OP_1, OPCODE.OP_DROP]
+        
+        # Programs
         # self.generate_p2pkh_script()
         # self.generate_p2pk_script()
         # self.generate_puzzle()
@@ -90,13 +95,15 @@ class AnimOPCODESeq(Scene):
         input_mobj_grp = Group()
         for _, obj in enumerate(self.in_stack_mobj):
             input_mobj_grp.add(obj)
+            
         input_stack_framebox = SurroundingRectangle(input_mobj_grp, buff=.5, color=BLUE, corner_radius=.15)
+        
         self.play(Create(input_stack_framebox))
         
         input_stack_title = Text(self._("Input Stack (SCRIPT)"), color=BLUE).scale(.6).next_to(input_stack_framebox, UP).align_to(input_stack_framebox, LEFT)
         self.play(Write(input_stack_title))
         
-        output_stack_title = Text(self._("Output Stack (RESULT)"), color=YELLOW).scale(.6).next_to(input_stack_title, RIGHT).shift(RIGHT * 2)
+        output_stack_title = Text(self._("Output Stack (RESULT)"), color=YELLOW).scale(.6).next_to(input_stack_title, RIGHT).align_to(input_stack_framebox, LEFT).shift(RIGHT * 5.1)
         self.play(Write(output_stack_title))
         
         self.render_output_stack(self.in_stack)
@@ -210,7 +217,7 @@ class AnimOPCODESeq(Scene):
         
         if output_text is not None:
             if len(self.out_stack_mobj) == 0:
-                output_text.to_corner(stack_top_elt).shift(RIGHT * 3)
+                output_text.to_corner(stack_top_elt).shift(RIGHT * 2)
             else:
                 output_text.next_to(self.out_stack_mobj[-1], stack_bottom_margin).align_to(self.out_stack_mobj[-1], LEFT)
 
@@ -256,6 +263,8 @@ class AnimOPCODESeq(Scene):
                     FadeOut(read_values_brace, shift=RIGHT),
                     FadeOut(read_values_text, shift=RIGHT)
                 )
+        else:
+            self.wait()
 
     def process_opcode_output_stack(self, p_opcode, input_block, current_in_idx):
         explain = None
